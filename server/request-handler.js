@@ -67,10 +67,8 @@ var requestHandler = function(request, response) {
   if (testObj.absURL.includes(request.url)) {
     if (request.method === 'GET') {
       //   check for errors GET related
-      //   give write head with code 200 and headers
       response.writeHead(statusCode, headers);
       //   end with JSON String of obj
-      console.log(testObj);
       response.end(JSON.stringify(testObj));
     } else if (request.method === 'POST') {
       // else if post
@@ -84,14 +82,11 @@ var requestHandler = function(request, response) {
         body = Buffer.concat(body).toString();
         // push the parse into textObj.results
         testObj.results.push(JSON.parse(body));
-        // console.log(testObj);
-        
         // write head for code 201
         statusCode = 201;
         response.writeHead(statusCode, headers);
         // call end
         response.end();
-        console.log(testObj.results);
       });  
     }
   } else {
@@ -100,7 +95,6 @@ var requestHandler = function(request, response) {
     // call end
     response.end();
   }
-  // console.log(testObj);
   // .writeHead() writes to the request line and headers of the response,
   // which includes the status and all headers.
   // response.writeHead(statusCode, headers);
