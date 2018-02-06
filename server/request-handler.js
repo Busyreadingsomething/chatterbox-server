@@ -63,31 +63,40 @@ var requestHandler = function(request, response) {
   
   // If get
   const url = require('url').parse(request.url, true);
-  console.log(absURL.includes(url.pathname));
-  console.log(url);
+  console.log(url.query);
   if (absURL.includes(url.pathname)) {
     if (request.method === 'GET') {
       // if query exists (object keys on query)
-      // if (Object.keys(url.query).length > 0) {
-      //   // set error to true
-      //   let error = false;
-      //   // check every key if either order or limit
-      //   // if order is either -createdAt or +createdAt
-      //   for (let key in url.query) {
-      //     if (key === 'order' && queryObj[key].includes(url.query[key]))
-      //   }
+      let copyObj = { results: testObj.results.slice() };
+      if (Object.keys(url.query).length > 0) {
+        console.log(Object.keys(url.query).length);
+        //slice copy of results array to avoid mutation
+        // check every key if either order or limit
+        // if order is either -createdAt or +createdAt
+
+        if (url.query.order && queryObj.order.includes(url.query.order)) {
+          //sort in here
+        } else if (url.query.order && !queryObj.order.includes(url.query.order)) {
+          statusCode = 400;
+        }
         
-      //   // if error is true
-      //   if (error) {
-      //     // 400 error
-      //   } else {
-      //     // send new obj
-      //   }
-      // }
+        if (url.query.limit && typeof url.query.limit === 'number' && statusCode === 200) {
+          //slice current copy of results upto limit number
+        } else if (url.query.limit && typeof url.query.limit !== 'number') {
+          statusCode = 400;
+        }
+        
+        // if error is true
+        if (statusCode === 400) {
+          // 400 error
+        } else {
+          // send new obj
+        }
+      }
       // else just send the object
       response.writeHead(statusCode, headers);
       // end with JSON String of obj
-      response.end(JSON.stringify(testObj));
+      response.end(JSON.stringify(copyObj));
     } else if (request.method === 'POST') {
       // else if post
       // check for errors POST related
