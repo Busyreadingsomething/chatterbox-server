@@ -11,8 +11,8 @@ this file and include it in basic-server.js so that it actually works.
 *Hint* Check out the node module documentation at http://nodejs.org/api/modules.html.
 
 **************************************************************/
-const testObj = {
-  absURL: '/classes/messages', 
+const absURL = 'http://127.0.0.1:3000/classes/messages';
+const testObj = { 
   results: [],
 };
 
@@ -43,12 +43,11 @@ var requestHandler = function(request, response) {
   // set conditions that check if request is POST/GET/etc
 
 
-  console.log('Serving request type ' + request.method + ' for url ' + request.url);
+  console.log(`Serving request type ${request.method} for url ${request.url}`, (request.type));
   // The outgoing status.
   var statusCode = 200;
   // See the note below about CORS headers.
   var headers = defaultCorsHeaders;
-
   // Tell the client we are sending them plain text.
   //
   // You will need to change this if you are sending something
@@ -64,11 +63,12 @@ var requestHandler = function(request, response) {
   //   response.end();
   // });
   // If get
-  if (testObj.absURL.includes(request.url)) {
+  if (absURL.includes(request.url)) {
     if (request.method === 'GET') {
       //   check for errors GET related
       response.writeHead(statusCode, headers);
       //   end with JSON String of obj
+      console.log(`-------------> sending`, testObj);
       response.end(JSON.stringify(testObj));
     } else if (request.method === 'POST') {
       // else if post
@@ -82,12 +82,16 @@ var requestHandler = function(request, response) {
         body = Buffer.concat(body).toString();
         // push the parse into textObj.results
         testObj.results.push(JSON.parse(body));
+        console.log(`++++++++++++++> posting`, testObj);
         // write head for code 201
         statusCode = 201;
         response.writeHead(statusCode, headers);
         // call end
         response.end();
       });  
+    } else if (request.method === 'OPTIONS') {
+      response.writeHead(statusCode, headers);
+      response.end();
     }
   } else {
     statusCode = 404;
@@ -121,4 +125,4 @@ var requestHandler = function(request, response) {
 // client from this domain by setting up static file serving.
 
 // add export of the handle function
-exports.handleRequest = requestHandler;
+exports.requestHandler = requestHandler;
