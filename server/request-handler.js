@@ -68,7 +68,6 @@ var requestHandler = function(request, response) {
       //   check for errors GET related
       response.writeHead(statusCode, headers);
       //   end with JSON String of obj
-      console.log(`-------------> sending`, testObj);
       response.end(JSON.stringify(testObj));
     } else if (request.method === 'POST') {
       // else if post
@@ -82,7 +81,6 @@ var requestHandler = function(request, response) {
         body = Buffer.concat(body).toString();
         // push the parse into textObj.results
         testObj.results.push(JSON.parse(body));
-        console.log(`++++++++++++++> posting`, testObj);
         // write head for code 201
         statusCode = 201;
         response.writeHead(statusCode, headers);
