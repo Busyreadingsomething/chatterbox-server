@@ -71,7 +71,7 @@ describe('Node Server Request Listener Function', function() {
 
     // Testing for a newline isn't a valid test
     // TODO: Replace with with a valid test
-    // expect(res._data).to.equal(JSON.stringify('\n'));
+    expect(res._data).to.equal(undefined);
     expect(res._ended).to.equal(true);
   });
 
@@ -100,7 +100,33 @@ describe('Node Server Request Listener Function', function() {
     expect(messages[0].message).to.equal('Do my bidding!');
     expect(res._ended).to.equal(true);
   });
+  
+  it('Should 400 when a limit query is not a number', function() {
+    var reqOrder = new stubs.request('/classes/messages?order=-createdAt&limit=two', 'GET');
+    var resOrder = new stubs.response();
+    
+    handler.requestHandler(reqOrder, resOrder);
+    
+    expect(resOrder._responseCode).to.equal(400);
+  });
 
+  it('Should 400 when a order string is incorrect', function() {
+    var reqLimit = new stubs.request('/classes/messages?order=-createdBy&limit=2', 'GET');
+    var resLimit = new stubs.response();
+    
+    handler.requestHandler(reqLimit, resLimit);
+    
+    expect(resLimit._responseCode).to.equal(400);
+  });
+
+  it('Should 400 when a bad query request is made', function() {
+    var reqBadQuery = new stubs.request('/classes/messages?order=-createdAt&limit=2&name=dog', 'GET');
+    var resBadQuery = new stubs.response();
+    
+    handler.requestHandler(reqBadQuery, resBadQuery);
+    
+    expect(resBadQuery._responseCode).to.equal(400);
+  });
 
   it('Should 404 when asked for a nonexistent file', function() {
     var req = new stubs.request('/arglebargle', 'GET');

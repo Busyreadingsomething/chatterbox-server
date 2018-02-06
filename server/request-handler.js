@@ -12,6 +12,7 @@ this file and include it in basic-server.js so that it actually works.
 
 **************************************************************/
 const absURL = 'http://127.0.0.1:3000/classes/messages';
+// console.log(absURL.length);
 const testObj = { 
   results: [],
 };
@@ -21,6 +22,11 @@ const defaultCorsHeaders = {
   'access-control-allow-methods': 'GET, POST, PUT, DELETE, OPTIONS',
   'access-control-allow-headers': 'content-type, accept',
   'access-control-max-age': 10 // Seconds.
+};
+
+const queryObj = {
+  order: ['-createdAt', '+createdAt'],
+  limit: 'number'
 };
 
 var requestHandler = function(request, response) {
@@ -55,19 +61,32 @@ var requestHandler = function(request, response) {
   headers['Content-Type'] = 'text/plain';
 
   
-  //check error first
-  // request.on('error', (err) => {
-  //   console.error(err);
-  //   statusCode = 400;
-  //   response.writeHead(statusCode, headers);
-  //   response.end();
-  // });
   // If get
-  if (absURL.includes(request.url)) {
+  const url = require('url').parse(request.url, true);
+  console.log(absURL.includes(url.pathname));
+  console.log(url);
+  if (absURL.includes(url.pathname)) {
     if (request.method === 'GET') {
-      //   check for errors GET related
+      // if query exists (object keys on query)
+      // if (Object.keys(url.query).length > 0) {
+      //   // set error to true
+      //   let error = false;
+      //   // check every key if either order or limit
+      //   // if order is either -createdAt or +createdAt
+      //   for (let key in url.query) {
+      //     if (key === 'order' && queryObj[key].includes(url.query[key]))
+      //   }
+        
+      //   // if error is true
+      //   if (error) {
+      //     // 400 error
+      //   } else {
+      //     // send new obj
+      //   }
+      // }
+      // else just send the object
       response.writeHead(statusCode, headers);
-      //   end with JSON String of obj
+      // end with JSON String of obj
       response.end(JSON.stringify(testObj));
     } else if (request.method === 'POST') {
       // else if post
@@ -80,7 +99,9 @@ var requestHandler = function(request, response) {
         // concat the data
         body = Buffer.concat(body).toString();
         // push the parse into textObj.results
-        testObj.results.push(JSON.parse(body));
+        body = JSON.parse(body);
+        body.createAt = new Date();
+        testObj.results.push(body);
         // write head for code 201
         statusCode = 201;
         response.writeHead(statusCode, headers);
@@ -97,6 +118,13 @@ var requestHandler = function(request, response) {
     // call end
     response.end();
   }
+
+  request.on('error', (err) => {
+    console.error(err);
+    statusCode = 400;
+    response.writeHead(statusCode, headers);
+    response.end();
+  });
   // .writeHead() writes to the request line and headers of the response,
   // which includes the status and all headers.
   // response.writeHead(statusCode, headers);
