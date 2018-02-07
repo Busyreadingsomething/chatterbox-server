@@ -17,7 +17,7 @@ const testObj = {
   results: [],
 };
 
-const queryKeys = ['order', 'limit'];
+const allowedQueryKeys = new Set(['order', 'limit']);
 
 const defaultCorsHeaders = {
   'access-control-allow-origin': '*',
@@ -64,27 +64,29 @@ var requestHandler = function(request, response) {
   if (absURL.includes(url.pathname)) {
     if (request.method === 'GET') {
       // if query exists (object keys on query)
-      console.log(url.query);
-      let copyObj = { results: testObj.results.slice() };
-      if (Object.keys(url.query).length > 0 && Object.keys(url.query).length < 3) {
-        //slice copy of results array to avoid mutation
+      let results = testObj.results.slice();
+      if (Object.keys(url.query).length > 0) {
+        // slice copy of results array to avoid mutation
         // check every key if either order or limit
+        Object.keys(url.query).forEach(q => {
+          if (!allowedQueryKeys.has(q)) {
+            statusCode = 400;
+          }
+        });
         // if order is either -createdAt or +createdAt
         if (url.query.order && url.query.order === '-createdAt' && statusCode === 200) {
-          copyObj.results.sort((a, b) => b.createdAt - a.createdAt);
+          results.sort((a, b) => b.createdAt - a.createdAt);
         } else if (url.query.order) {
           statusCode = 400;
         }
         
-        if (url.query.limit && !isNaN(Math.abs(url.query.limit)) && statusCode === 200) {
+        if (url.query.limit && !isNaN(Number(url.query.limit)) && statusCode === 200) {
           //slice current copy of results upto limit number
-          copyObj.results = copyObj.results.slice(0, Math.abs(url.query.limit));
-        } else if (url.query.limit && isNaN(Math.abs(url.query.limit))) {
+          results = results.slice(0, Number(url.query.limit));
+        } else if (url.query.limit && isNaN(Number(url.query.limit))) {
           statusCode = 400;
         }
         
-      } else if (Object.keys(url.query).length > 2) {
-        statusCode = 400;
       }
       
       response.writeHead(statusCode, headers);
@@ -93,7 +95,7 @@ var requestHandler = function(request, response) {
         response.end();
       } else {
         // send new obj
-        response.end(JSON.stringify(copyObj));
+        response.end(JSON.stringify({ results }));
       }
 
     } else if (request.method === 'POST') {
