@@ -17,16 +17,13 @@ const testObj = {
   results: [],
 };
 
+const queryKeys = ['order', 'limit'];
+
 const defaultCorsHeaders = {
   'access-control-allow-origin': '*',
   'access-control-allow-methods': 'GET, POST, PUT, DELETE, OPTIONS',
   'access-control-allow-headers': 'content-type, accept',
   'access-control-max-age': 10 // Seconds.
-};
-
-const queryObj = {
-  order: ['-createdAt', '+createdAt'],
-  limit: 'number'
 };
 
 var requestHandler = function(request, response) {
@@ -63,40 +60,42 @@ var requestHandler = function(request, response) {
   
   // If get
   const url = require('url').parse(request.url, true);
-  console.log(url.query);
+
   if (absURL.includes(url.pathname)) {
     if (request.method === 'GET') {
       // if query exists (object keys on query)
+      console.log(url.query);
       let copyObj = { results: testObj.results.slice() };
-      if (Object.keys(url.query).length > 0) {
-        console.log(Object.keys(url.query).length);
+      if (Object.keys(url.query).length > 0 && Object.keys(url.query).length < 3) {
         //slice copy of results array to avoid mutation
         // check every key if either order or limit
         // if order is either -createdAt or +createdAt
-
-        if (url.query.order && queryObj.order.includes(url.query.order)) {
-          //sort in here
-        } else if (url.query.order && !queryObj.order.includes(url.query.order)) {
+        if (url.query.order && url.query.order === '-createdAt' && statusCode === 200) {
+          copyObj.results.sort((a, b) => b.createdAt - a.createdAt);
+        } else if (url.query.order) {
           statusCode = 400;
         }
         
-        if (url.query.limit && typeof url.query.limit === 'number' && statusCode === 200) {
+        if (url.query.limit && !isNaN(Math.abs(url.query.limit)) && statusCode === 200) {
           //slice current copy of results upto limit number
-        } else if (url.query.limit && typeof url.query.limit !== 'number') {
+          copyObj.results = copyObj.results.slice(0, Math.abs(url.query.limit));
+        } else if (url.query.limit && isNaN(Math.abs(url.query.limit))) {
           statusCode = 400;
         }
         
-        // if error is true
-        if (statusCode === 400) {
-          // 400 error
-        } else {
-          // send new obj
-        }
+      } else if (Object.keys(url.query).length > 2) {
+        statusCode = 400;
       }
-      // else just send the object
+      
       response.writeHead(statusCode, headers);
-      // end with JSON String of obj
-      response.end(JSON.stringify(copyObj));
+      if (statusCode === 400) {
+        // 400 error
+        response.end();
+      } else {
+        // send new obj
+        response.end(JSON.stringify(copyObj));
+      }
+
     } else if (request.method === 'POST') {
       // else if post
       // check for errors POST related
@@ -109,7 +108,7 @@ var requestHandler = function(request, response) {
         body = Buffer.concat(body).toString();
         // push the parse into textObj.results
         body = JSON.parse(body);
-        body.createAt = new Date();
+        body.createdAt = new Date();
         testObj.results.push(body);
         // write head for code 201
         statusCode = 201;

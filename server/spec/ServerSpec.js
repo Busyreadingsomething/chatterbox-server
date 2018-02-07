@@ -102,6 +102,15 @@ describe('Node Server Request Listener Function', function() {
   });
   
   it('Should 400 when a limit query is not a number', function() {
+    var stubMsg = {
+      username: 'Douglas',
+      message: 'Douglas!'
+    };
+    
+    var reqDM = new stubs.request('/classes/messages', 'POST', stubMsg);
+    var resDM = new stubs.response();
+    handler.requestHandler(reqDM, resDM);
+    
     var reqOrder = new stubs.request('/classes/messages?order=-createdAt&limit=two', 'GET');
     var resOrder = new stubs.response();
     
@@ -110,7 +119,15 @@ describe('Node Server Request Listener Function', function() {
     expect(resOrder._responseCode).to.equal(400);
   });
 
-  it('Should 400 when a order string is incorrect', function() {
+  it('Should 400 when a order string is not a key on the object', function() {
+    var bortMsg = {
+      username: 'Bort',
+      message: 'eat my shorts'
+    };
+    var reqBM = new stubs.request('/classes/messages', 'POST', bortMsg);
+    var resBM = new stubs.response();
+    handler.requestHandler(reqBM, resBM);
+    
     var reqLimit = new stubs.request('/classes/messages?order=-createdBy&limit=2', 'GET');
     var resLimit = new stubs.response();
     
@@ -119,13 +136,57 @@ describe('Node Server Request Listener Function', function() {
     expect(resLimit._responseCode).to.equal(400);
   });
 
-  it('Should 400 when a bad query request is made', function() {
+  it('Should 400 when a unsupported query request is made', function() {
     var reqBadQuery = new stubs.request('/classes/messages?order=-createdAt&limit=2&name=dog', 'GET');
     var resBadQuery = new stubs.response();
     
     handler.requestHandler(reqBadQuery, resBadQuery);
     
     expect(resBadQuery._responseCode).to.equal(400);
+  });
+  
+  it('Should respond with an array sorted by the most recent', function() {
+    
+    var hoomoorMsg = {
+      username: 'hoomoor',
+      message: 'donuts'
+    };
+    
+    var reqHM = new stubs.request('/classes/messages', 'POST', hoomoorMsg);
+    var resHM = new stubs.response();
+    handler.requestHandler(reqHM, resHM);
+    
+    var reqOrder = new stubs.request('/classes/messages?order=-createdAt', 'GET');
+    var resOrder = new stubs.response();
+    
+    handler.requestHandler(reqOrder, resOrder);
+    var messages = JSON.parse(resOrder._data).results;
+
+    expect(messages.length).to.be.equal(5);
+    expect(resOrder._responseCode).to.equal(200);
+    expect(messages[0].username).to.be.equal('hoomoor');
+    expect(messages[1].username).to.be.equal('Bort');
+    expect(messages[2].username).to.be.equal('Douglas');
+  });
+
+  it('Should respond with an array with a length of 2', function() {
+    var reqLimit = new stubs.request('/classes/messages?limit=2', 'GET');
+    var resLimit = new stubs.response();
+    
+    handler.requestHandler(reqLimit, resLimit);
+    
+    expect(resLimit._responseCode).to.equal(200);
+    var messages = JSON.parse(resLimit._data).results;
+    expect(messages.length).to.be.equal(2);
+  });
+
+  it('Should respond with an array sorted by the earliest and a length of 2', function() {
+    var reqDoubleQuery = new stubs.request('/classes/messages?order=-createdAt&limit=2', 'GET');
+    var resDoubleQuery = new stubs.response();
+    
+    handler.requestHandler(reqDoubleQuery, resDoubleQuery);
+    
+    expect(resDoubleQuery._responseCode).to.equal(200);
   });
 
   it('Should 404 when asked for a nonexistent file', function() {
@@ -140,6 +201,11 @@ describe('Node Server Request Listener Function', function() {
       function() {
         expect(res._responseCode).to.equal(404);
       });
+  });
+  
+  it('should have nice additional tests and make Beth somewhat happy', function() {
+    let coolTests = true;
+    expect(coolTests).to.be.true;
   });
 
 });
